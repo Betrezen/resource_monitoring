@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Edit{% endblock %}
+{% block content %}
+<div class="col-md-10 col-md-offset-2 main">
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="alert alert-{{ category }}">
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    {{ message }}
+</div>
+{% endfor %}
+<h1 class="page-header">Edit</h1>
+    <form class=add-entry action="{{ url_for('resource_update', rid=data['resource'].id) }}"
+          method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+
+            name:<input type="text" name="name" readonly="true" value="{{ data['resource'].name}}"><br/>
+
+            turn on/off:
+            <select name="turnon">
+            {% for item in data['turnon'] %}
+                <option  value="{{item}}" {% if data['resource'].turnon==item %}selected="selected"{% endif %}>
+                    {{item}}
+                </option>
+            {% endfor %}
+            </select>
+            <br/>
+
+            status:
+            <select name="status">
+            {% for item in data['statuses'] %}
+                <option  value="{{item}}" {% if data['resource'].status==item %}selected="selected"{% endif %}>
+                    {{item}}
+                </option>
+            {% endfor %}
+            </select>
+            <br/>
+
+            href: <input type="text" name="href" value="{{ data['resource'].href}}"><br/>
+
+            <br/><input type="submit" value="Submit">
+        </div>
+    </form>
+</div>
+{% endblock %}

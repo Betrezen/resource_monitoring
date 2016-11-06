@@ -1,0 +1,8 @@
+pyyaml
+sqlalchemy
+pyzmq
+flask
+flask-sqlalchemy
+flask-admin
+flask_restful
+celery
