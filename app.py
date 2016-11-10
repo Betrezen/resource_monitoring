@@ -15,7 +15,6 @@ from pylib.settings import SQLALCHEMY_DATABASE_URI
 from pylib.settings import FLASK_SESSION_TYPE, FLASK_UPLOAD_FOLDER
 from pylib.settings import FLASK_ALLOWED_EXTENSIONS, FLASK_RESOURCE_STATUSES
 from pylib.db import DbProxy
-from pylib.services import run_services
 
 
 __NAME__ = "monoringOfResources"
