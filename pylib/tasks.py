@@ -57,12 +57,18 @@ class TestTasks(unittest.TestCase):
         time.sleep(10)
         cls.celery_server.terminate()
 
-    def test_task_delay(self):
-        res = test_task.delay()
-        print res
+    def test_nothing(self):
         time.sleep(2)
 
 if __name__ == '__main__':
-    unittest.main(verbosity=True)
+    #unittest.main(verbosity=True)
+    run_celery_server()
+
+
+
+
+
+
+
 
 
