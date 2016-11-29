@@ -15,7 +15,6 @@ from pylib.settings import SQLALCHEMY_DATABASE_URI
 from pylib.settings import FLASK_SESSION_TYPE, FLASK_UPLOAD_FOLDER
 from pylib.settings import FLASK_ALLOWED_EXTENSIONS, FLASK_RESOURCE_STATUSES
 from pylib.db import DbProxy
-from pylib.db_pc import PC_DbProxy
 from pylib.services import run_services
 
 
@@ -124,7 +123,7 @@ def resource_update(rid=None):
 # PC-resource pages
 @app.route('/pc-resources')
 def pc_resource_list_page():
-    dbproxy = PC_DbProxy()
+    dbproxy = DbProxy()
     resources = dbproxy.get_pc_all()
     context = {'pc_resource': resources}
     return render_template('index_pc.html', data=context)
@@ -139,7 +138,7 @@ def pc_resource_form():
 @app.route('/add-pc-res', methods=['POST'])
 def pc_resource_add():
     if request.method == 'POST':
-        dbproxy = PC_DbProxy()
+        dbproxy = DbProxy()
         ip = request.form['ip']
         name = request.form['name']
         turn = request.form['turnon']
@@ -157,7 +156,7 @@ def pc_resource_add():
 
 @app.route('/edit_pc_res/<rid>', methods=['GET'])
 def pc_resource_edit(rid=None):
-    dbproxy = PC_DbProxy()
+    dbproxy = DbProxy()
     res = dbproxy.get_pc_resource(rid)
     if res.turnon:
         res.turnon = 'ON'
@@ -169,7 +168,7 @@ def pc_resource_edit(rid=None):
 
 @app.route('/update_pc_res/<rid>', methods=['POST'])
 def pc_resource_update(rid=None):
-    dbproxy = PC_DbProxy()
+    dbproxy = DbProxy()
     res = dbproxy.get_pc_resource(rid)
     if res:
         turn = request.form['turnon']
@@ -185,7 +184,7 @@ def pc_resource_update(rid=None):
 
 @app.route('/delete_pc_res/<rid>', methods=['DELETE', 'GET'])
 def pc_resource_del(rid=None):
-    dbproxy = PC_DbProxy()
+    dbproxy = DbProxy()
     res = dbproxy.delete_pc_resource(rid=rid)
     flash ("Item: ID=[{}] has been deleted".format(rid))
     return redirect(url_for('pc_resource_list_page'))
