@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}PC-Resources{% endblock %}
+{% block content %}
+<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="alert alert-{{ category }}">
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    {{ message }}
+</div>
+{% endfor %}
+
+  </a></td><h1 class="page-header"><img src="/static/images/for_pc_res.jpg" width="40" height="40"> PC-Resources:</h1>
+  <a href="{{ url_for('pc_resource_form') }}"><button type="button" class="btn btn-primary">Add</button></a>
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Edit</th>
+          <th>Delete</th>
+          <th>ID</th>
+          <th>IP</th>
+          <th>Name</th>
+          <th>Turn On/Off</th>
+          <th>Status</th>
+          <th>Date/Time</th>
+          <th>Uptime</th>
+          <th>Disk</th>
+          <th>CPU usage</th>
+          <th>Memory usage</th>
+          <th>Network</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for it in data['pc_resource'] %}
+        <tr>
+          <td><a href="/edit_pc_res/{{ it.id }}"><img src="/static/images/edit-icon.png"></a></td>
+          <td><a href="/delete_pc_res/{{ it.id }}"><img src="/static/images/delete-icon.png"></a></td>
+          <td>{{ it.id }}</td>
+          <td>{{ it.ip}}</td>
+          <td>{{ it.name }}</td>
+          <td>{{ it.turnon }}</td>
+          <td>{{ it.status }}</td>
+          <td>{{ it.date }} | {{ it.time }}</td>
+          <td>{{ it.uptime }}</td>
+          <td>{{ it.disk_free }}</td>
+          <td>{{ it.cpu_u}}</td>
+          <td>{{ it.memory_u}}</td>
+          <td>{{ it.network}}</td>
+          <td></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

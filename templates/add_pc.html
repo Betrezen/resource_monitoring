@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Resources Add{% endblock %}
+{% block content %}
+<div class="col-md-10 col-md-offset-2 main">
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="alert alert-{{ category }}">
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    {{ message }}
+</div>
+{% endfor %}
+<h1 class="page-header">Add new resource</h1>
+    <form class=add-entry action="{{ url_for('pc_resource_add') }}" method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            ip:<input  type="text" name="ip"><br/>
+            PC-name:<input type="text" name="name"><br/>
+
+            turn on/off:
+            <select name="turnon">
+            {% for item in data['turnon'] %}
+                <option  value="{{item}}">{{item}}</option>
+            {% endfor %}
+            </select>
+            <br/>
+
+            status:
+            <select name="status">
+            {% for item in data['statuses'] %}
+                <option  value="{{item}}">{{item}}</option>
+            {% endfor %}
+            </select>
+            <br/>
+            disk free:<input type="text" name="disk_free">
+            <br/>
+            cpu_u:<input type="text" name="cpu_u">
+            <br/>
+            <br/><input type="submit" value="Upload">
+        </div>
+    </form>
+</div>
+{% endblock %}
