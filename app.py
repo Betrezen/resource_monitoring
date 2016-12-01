@@ -117,6 +117,77 @@ def resource_update(rid=None):
     flash("Item: ID=[{}] has been updated. {}".format(rid, request.form['status']))
     return redirect(url_for('resource_list_page'))
 
+
+#######################################################################################################################################################
+# PC-resource pages
+@app.route('/pc-resources')
+def pc_resource_list_page():
+    dbproxy = DbProxy()
+    resources = dbproxy.get_pc_all()
+    context = {'pc_resource': resources}
+    return render_template('index_pc.html', data=context)
+
+@app.route('/pc-resources/new-pc-res', methods=['GET'])
+def pc_resource_form():
+    context = {'allowed': ALLOWED_EXTENSIONS,
+               'statuses': STATUSES,
+               'turnon': ['ON', 'OFF']}
+    return render_template('add_pc.html', data=context)
+
+@app.route('/add-pc-res', methods=['POST'])
+def pc_resource_add():
+    if request.method == 'POST':
+        dbproxy = DbProxy()
+        ip = request.form['ip']
+        name = request.form['name']
+        turn = request.form['turnon']
+        turnon = False
+        if turn == 'ON':
+            turnon = True
+        status = request.form['status']
+        disk_free = request.form['disk_free']
+        cpu_u = request.form['cpu_u']
+        #date = request.form['date']
+        #time = request.form['time']
+        dbproxy.add_pc_resource(ip=ip, name=name, turnon=turnon, status=status, disk_free=disk_free, cpu_u=cpu_u)
+        flash("Item: ID=[{}] has been created".format('NA'))
+        return redirect(url_for('pc_resource_list_page'))
+
+@app.route('/edit_pc_res/<rid>', methods=['GET'])
+def pc_resource_edit(rid=None):
+    dbproxy = DbProxy()
+    res = dbproxy.get_pc_resource(rid)
+    if res.turnon:
+        res.turnon = 'ON'
+    else:
+        res.turnon = 'OFF'
+    if res:
+        context = {'resource': res, 'statuses': STATUSES, 'turnon': ['ON', 'OFF']}
+    return render_template('edit_pc.html', data=context)
+
+@app.route('/update_pc_res/<rid>', methods=['POST'])
+def pc_resource_update(rid=None):
+    dbproxy = DbProxy()
+    res = dbproxy.get_pc_resource(rid)
+    if res:
+        turn = request.form['turnon']
+        turnon = False
+        if turn == 'ON':
+            turnon = True
+        status = request.form['status']
+        disk_free = request.form['disk_free']
+        cpu_u = request.form['cpu_u']
+        dbproxy.update_pc_resource(rid=rid, turnon=turnon, status=status, disk_free=disk_free, cpu_u=cpu_u)
+    flash("Item: ID=[{}] has been updated. {}".format(rid, request.form['status']))
+    return redirect(url_for('pc_resource_list_page'))
+
+@app.route('/delete_pc_res/<rid>', methods=['DELETE', 'GET'])
+def pc_resource_del(rid=None):
+    dbproxy = DbProxy()
+    res = dbproxy.delete_pc_resource(rid=rid)
+    flash ("Item: ID=[{}] has been deleted".format(rid))
+    return redirect(url_for('pc_resource_list_page'))
+
 @app.route('/help')
 def help_page():
     return render_template('help.html')
