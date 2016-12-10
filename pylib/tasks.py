@@ -5,11 +5,12 @@ for example
 - we do health check of agents (if it necessary)
 """
 
+import json
 import subprocess
 import time
 import unittest
 from datetime import timedelta
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 
 import requests
 from celery import Celery
@@ -18,6 +19,9 @@ from celery import current_app
 from celery.bin import worker
 
 from pylib import count_down
+from publisher import ZMQPublisher
+from subscriber import ZMQSubscriber
+from db import DbProxy
 
 app = Celery('tasks', broker='amqp://guest@localhost//')
 
@@ -32,13 +36,26 @@ def run_celery_server():
     }
     worker_process.run(**options)
 
+"""
 @app.task
 def test_task(timeout=5):
     return count_down(timeout)
+"""
 
-@periodic_task(run_every=timedelta(seconds=5))
-def ping_web(url='http://google.com'):
-    res = requests.get(url, timeout=3)
+@periodic_task(run_every=timedelta(seconds=30))
+def ping_web(url=None):
+    publisher = ZMQPublisher()
+    dbproxy = DbProxy()
+
+    if url:
+        res = requests.get(url, timeout=3)
+    else:
+        resources = dbproxy.get_all()
+        for i in resources:
+            res = requests.get(i.href, timeout=3)
+            d = {'status':res.status_code, 'href': i.href}
+            message = json.dumps(d)
+            publisher.send(msg=message)
     return res
 
 
@@ -63,12 +80,3 @@ class TestTasks(unittest.TestCase):
 if __name__ == '__main__':
     #unittest.main(verbosity=True)
     run_celery_server()
-
-
-
-
-
-
-
-
-

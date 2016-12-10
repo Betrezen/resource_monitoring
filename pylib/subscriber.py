@@ -1,3 +1,4 @@
+import json
 import hashlib
 import os
 import random
@@ -38,7 +39,7 @@ class ZMQSubscriber(object):
             # logger.debug('ZMQSubscriber: trying to get something')
             try:
                 message = self.socket.recv_string(zmq.NOBLOCK)
-                # logger.debug("ZMQSubscriber: queue={}".format(self.queue))
+                logger.debug("ZMQSubscriber: queue={}".format(self.queue))
                 if self.queue:
                     self.queue.put(message)
                     # logger.debug("ZMQSubscriber put message to queue. {}".format(message))
@@ -57,33 +58,47 @@ class ZMQSubscriber(object):
     def stop(self):
         self.stop_sig.set()
 
-
-def init_subscribe(queue):
-    subscriber = ZMQSubscriber(queue=queue)
-    i = 10
-    while i > 0:
-        if not queue.empty():
-            logger.debug('message through queue={}'.format(queue.get()))
-        else:
-            logger.debug('queue is empty')
-            time.sleep(0.2)
-        i -= 1
-    time.sleep(5)
-    subscriber.stop()
+def init_subscribe(queue, steps=1000):
+    try:
+        subscriber = ZMQSubscriber(queue=queue)
+        while steps > 0:
+            if not queue.empty():
+                logger.debug('message through queue={}'.format(queue.get()))
+            else:
+                logger.debug('queue is empty')
+                time.sleep(0.2)
+            steps -= 1
+    except Exception:
+        subscriber.stop()
+        subscriber.terminate()
+        del(subscriber)
 
 
 def init_publisher():
     publisher = ZMQPublisher()
-    barcode = hashlib.sha256(os.urandom(30).encode('base64')[:-1]).hexdigest()[:10]
-    publisher.send(barcode, random.choice(['gui', 'all']))
-    time.sleep(3)
-    barcode = hashlib.sha256(os.urandom(30).encode('base64')[:-1]).hexdigest()[:10]
-    publisher.send(barcode, random.choice(['gui', 'all']))
+    i=100
+    while i>0:
+        barcode = hashlib.sha256(os.urandom(30).encode('base64')[:-1]).hexdigest()[:10]
+        publisher.send(barcode, random.choice(['gui', 'all']))
+        time.sleep(3)
+        i-=1
 
 
 class TestZMQSubscriber(unittest.TestCase):
 
-    # @unittest.skip
+    def test_simple(self):
+        publisher_process = Process(target=init_publisher)
+        publisher_process.start()
+
+        subscriber_queue = Queue()
+        subscriber_process = Process(target=init_subscribe, args=(subscriber_queue,))
+        subscriber_process.start()
+
+        time.sleep(5)
+        publisher_process.terminate()
+        subscriber_process.terminate()
+
+    @unittest.skip('opa')
     def test_loop(self):
         publisher = ZMQPublisher()
         subscriber = ZMQSubscriber()
@@ -109,7 +124,7 @@ class TestZMQSubscriber(unittest.TestCase):
             time.sleep(1)
         subscriber.stop()
 
-    # @unittest.skip
+    @unittest.skip('opa')
     def test_multiprocess(self):
         subscriber_queue = Queue()
         subscriber_process = Process(target=init_subscribe, args=(subscriber_queue,))
@@ -123,6 +138,7 @@ class TestZMQSubscriber(unittest.TestCase):
 
         publisher_process.terminate()
         subscriber_process.terminate()
+
 
 
 if __name__ == '__main__':

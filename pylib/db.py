@@ -11,7 +11,7 @@ import os
 import random
 import unittest
 
-from sqlalchemy import Column, Boolean, Integer, String, Date, Time
+from sqlalchemy import Column, Boolean, Integer, String, Date, Time, DateTime
 from sqlalchemy import create_engine
 from sqlalchemy import desc
 from sqlalchemy.ext.declarative import declarative_base
@@ -110,6 +110,26 @@ class PC_resource(Base):
             self.network)
 
 
+class ResourceCheck(Base):
+    __tablename__ = 'web_check'
+    id = Column(Integer, primary_key=True)
+    href = Column(String(100))    
+    date_time = Column(DateTime)
+    status = Column(Integer)
+
+
+    def __init__(self,
+                 href='http://XZ',
+                 d=datetime.datetime.now(),
+                 status = 0):
+        self.href = href
+        self.date_time = d
+        self.status = status
+
+    def __repr__(self):
+        return "<Resource({} {}__{}__{})>".format(
+            self.id, self.href, self.status, self.date_time)
+
 class DbProxy(object):
 
     def __init__(self):
@@ -199,6 +219,12 @@ class DbProxy(object):
     def get_pc_all(self, order1=PC_resource.date, order2=PC_resource.time, order3=PC_resource.disk_free, order4=PC_resource.cpu_u):
         return self.session.query(PC_resource).order_by(desc(order1), desc(order2), desc(order3), desc(order4)).all()
 
+    def add_web_check(self, d):
+        print "add_web_check"
+        res = ResourceCheck(status=d.get('status'), href=d.get('href'))
+        self.session.add(res)
+        self.session.commit()
+        return res.id
 
 class TestBDProxy(unittest.TestCase):
     def test_1_write_read(self):

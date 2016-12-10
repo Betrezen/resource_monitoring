@@ -1,4 +1,6 @@
 import json
+import time
+from multiprocessing import Process, Queue
 
 from flask import Flask
 from flask import render_template, redirect, url_for, request, flash, make_response
@@ -7,6 +9,7 @@ from flask import render_template, redirect, url_for, request, flash, make_respo
 # from flask.ext import admin
 # from flask.ext.admin.contrib import sqla
 # from flask.ext.admin.contrib.sqla import filters
+
 from flask_login import LoginManager
 from flask_restful import Api
 
@@ -15,6 +18,8 @@ from pylib.settings import SQLALCHEMY_DATABASE_URI
 from pylib.settings import FLASK_SESSION_TYPE, FLASK_UPLOAD_FOLDER
 from pylib.settings import FLASK_ALLOWED_EXTENSIONS, FLASK_RESOURCE_STATUSES
 from pylib.db import DbProxy
+from pylib.subscriber import ZMQSubscriber
+from pylib.log import logger
 
 
 __NAME__ = "monoringOfResources"
@@ -39,7 +44,6 @@ api = Api(app)
 
 # Create admin
 login_manager = LoginManager()
-
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -118,7 +122,7 @@ def resource_update(rid=None):
     return redirect(url_for('resource_list_page'))
 
 
-#######################################################################################################################################################
+################################################################################
 # PC-resource pages
 @app.route('/pc-resources')
 def pc_resource_list_page():
@@ -192,8 +196,28 @@ def pc_resource_del(rid=None):
 def help_page():
     return render_template('help.html')
 
+################################################################################
+def do_subscribe():
+    def save_results(queue, steps=1000):
+        subscriber = ZMQSubscriber(queue=queue)
+        while True:
+            if not queue.empty():
+                raw_msg = queue.get()
+                message = json.loads(raw_msg[raw_msg.find('{'):])
+                logger.debug('message through queue={}'.format(message))
+                dbproxy.add_web_check(message)
+            else:
+                logger.debug('queue is empty')
+                time.sleep(0.2)
+    dbproxy = DbProxy()
+    subscriber_queue = Queue()
+    subscriber_process = Process(target=save_results, args=(subscriber_queue,))
+    subscriber_process.start()
+
 if __name__ == '__main__':
     # db.drop_all()
     # db.create_all()
     # run_services()
+
+    do_subscribe()
     app.run('127.0.0.1', 8989, debug=False)

@@ -295,13 +295,15 @@ def count_down(time_to_sleep):
 
 
 class DoItInTread(object):
+    import threading
     def __init__(self):
-        import threading
         self.stop_sig = threading.Event()
-        self.receive_thread = threading.Thread(target=self.receive)
-        self.receive_thread.start()
+        self.receive_thread = threading.Thread(target=self.do)
+        #self.receive_thread.start()
 
     def do(self):
+        raise NotImplementedError('method should be implemented')        
+        """
         while not self.stop_sig.is_set():
             try:
                 # do something
@@ -309,7 +311,7 @@ class DoItInTread(object):
             except:
                 # handle except
                 pass
-
+        """
     def start(self):
         if not self.receive_thread.isAlive():
             self.receive_thread.start()
