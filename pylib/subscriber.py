@@ -1,6 +1,7 @@
 import json
 import hashlib
 import os
+import sys
 import random
 import threading
 from multiprocessing import Process, Queue
@@ -9,9 +10,10 @@ import unittest
 
 import zmq
 
-from publisher import ZMQPublisher
+from publisher import ZMQPublisher, init_publisher
 from settings import LOGGER as logger
 from settings import ZEROMQ_SERVER_HOST, ZEROMQ_SERVER_PORT
+from db import DbProxy
 
 
 class ZMQSubscriber(object):
@@ -51,37 +53,33 @@ class ZMQSubscriber(object):
         logger.debug('ZMQSubscriber: Stop')
 
     def start(self):
+        logger.debug('ZMQSubscriber: Thread start')
         if not self.receive_thread.isAlive():
             self.receive_thread.start()
         self.stop_sig.clear()
 
     def stop(self):
+        logger.debug('ZMQSubscriber: Thread stop')
         self.stop_sig.set()
 
-def init_subscribe(queue, steps=1000):
-    try:
-        subscriber = ZMQSubscriber(queue=queue)
-        while steps > 0:
+
+def init_subscribe(queue):
+    subscriber = ZMQSubscriber(queue=queue)
+    dbproxy = DbProxy()
+    while True:
+        try:
+            # Let's do something here.... read from queue and save to DB
             if not queue.empty():
-                logger.debug('message through queue={}'.format(queue.get()))
+                raw_message = queue.get()
+                logger.debug('message through queue={}'.format(raw_message))
+                # save to DB or....
+                # dbproxy.add_web_check(raw_message)
             else:
                 logger.debug('queue is empty')
-                time.sleep(0.2)
-            steps -= 1
-    except Exception:
-        subscriber.stop()
-        subscriber.terminate()
-        del(subscriber)
-
-
-def init_publisher():
-    publisher = ZMQPublisher()
-    i=100
-    while i>0:
-        barcode = hashlib.sha256(os.urandom(30).encode('base64')[:-1]).hexdigest()[:10]
-        publisher.send(barcode, random.choice(['gui', 'all']))
-        time.sleep(3)
-        i-=1
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            subscriber.stop()
+            break
 
 
 class TestZMQSubscriber(unittest.TestCase):
@@ -142,4 +140,15 @@ class TestZMQSubscriber(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(verbosity=7)
+    #unittest.main(verbosity=7)
+    try:
+        subscriber_queue = Queue()
+        subscriber_process = Process(target=init_subscribe, args=(subscriber_queue,))
+        subscriber_process.start()
+        logger.debug('subscriber_process start')
+        subscriber_process.join()
+    except KeyboardInterrupt:
+        logger.debug('subscriber_process terminating')
+        subscriber_process.terminate()
+        sys.exit()
+

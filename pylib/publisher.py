@@ -1,10 +1,12 @@
 import hashlib
 import os
+import sys
 import random
 import time
 import unittest
 
 import zmq
+from multiprocessing import Process, Queue
 
 from settings import LOGGER as logger
 from settings import ZEROMQ_SERVER_HOST, ZEROMQ_SERVER_PORT
@@ -32,6 +34,19 @@ class ZMQPublisher(object):
             raise ValueError, 'receiver is not correct'
 
 
+def init_publisher():
+    publisher = ZMQPublisher()
+    while True:
+        try:
+            # Let's do something here.... read from com port or ...etc...
+            barcode = hashlib.sha256(os.urandom(30).encode('base64')[:-1]).hexdigest()[:10]
+            publisher.send(barcode, random.choice(['gui', 'all']))
+            time.sleep(0.1)
+        except KeyboardInterrupt:
+            logger.debug('init_publisher while loop is stopping')
+            break
+
+
 class TestZMQPublisher(unittest.TestCase):
 
     def test_stupid(self):
@@ -47,4 +62,14 @@ class TestZMQPublisher(unittest.TestCase):
                 self.assertTrue(False, 'something wrong')
 
 if __name__ == '__main__':
-    unittest.main(verbosity=7)
+    #unittest.main(verbosity=7)
+    try:
+        publisher_process = Process(target=init_publisher)
+        publisher_process.start()
+        logger.debug('publisher_process start')
+        publisher_process.join()
+    except KeyboardInterrupt:
+        logger.debug('publisher_process terminating')
+        publisher_process.terminate()
+        sys.exit()
+

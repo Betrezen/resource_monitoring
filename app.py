@@ -203,7 +203,7 @@ def do_subscribe():
         while True:
             if not queue.empty():
                 raw_msg = queue.get()
-                message = json.loads(raw_msg[raw_msg.find('{'):])
+                message = raw_msg # json.loads(raw_msg[6:-1])
                 logger.debug('message through queue={}'.format(message))
                 dbproxy.add_web_check(message)
             else:
